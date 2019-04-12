@@ -23,7 +23,7 @@ connection.connect(function(err) {
   shopping();
 });
 
-//here were are preseting the bamazon products to a connected user (need to put this into a function)
+//here were are presenting the bamazon products to a connected user
 function shopping() {
   connection.query("SELECT * FROM products", function(err, res) {
     if (err) throw err;
@@ -33,18 +33,50 @@ function shopping() {
     console.log(table.toString());
 
     //here we will prompt the user to select a product ID and a qty
-    inquirer.prompt([
+    inquirer.prompt(
         {
-        name: 'choice',
+        name: 'selection',
         type: 'input',
-        message: 'What is the Item ID you want to buy?'
-    }, 
-    { 
-        name: 'choice',
-        type: 'input',
-        message: 'How many do you want to buy?'
-    }
-    ]);
+        message: 'What is the Item ID you want to buy?',
+        validate: function(value) {
+            if (isNaN(value) == false) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+    })
+    .then(function(answers) {
+        var requestedId = answers.selection;
+        //console.log('The requested ID Is ' + requestedId);
+        if (requestedId >= 1 && requestedId <= 10) {
+            console.log('\n...Fantastic! We have this item...\n')
+            console.log('\n...Next step...\n');
+
+            inquirer.prompt(
+                {
+                    name: 'quantity',
+                    type: 'input',
+                    message: 'How many of these do you want to buy?',
+                    validate: function(value) {
+                        if (isNaN(value) == false) {
+                            return true;
+                        }
+                        else {
+                            return false;
+                        }
+                    }
+                })
+                .then(function(answers){
+                    var requestedQty = answers.quantity;
+                    console.log(requestedQty);
+                })
+        } else {
+            console.log("We do not have this item in stock at this time! Please select another item!");
+            shopping();
+        }
+    })
   });
   connection.end();
 }
@@ -55,3 +87,6 @@ function shopping() {
 //here we will log the insufficent stock to fulfill the order
 
 //udpate the remaining stock and log the purchase cost
+
+//make the table a function
+
