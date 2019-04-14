@@ -17,76 +17,64 @@ var connection = mysql.createConnection({
 });
 
 //here we manage the connections
-connection.connect(function(err) {
+connection.connect(function (err) {
   if (err) throw err;
   console.log("Welcome to our store!");
-  shopping();
+  showStore();
 });
 
 //here were are presenting the bamazon products to a connected user
 function shopping() {
-  connection.query("SELECT * FROM products", function(err, res) {
-    if (err) throw err;
-    for (var i = 0; i < res.length; i++) {
-      table.push([res[i].item_id, res[i].product_name, res[i].department_name, res[i].price, res[i].stock_qty]);
-    }
-    console.log(table.toString());
-
-    //here we will prompt the user to select a product ID and a qty
-    inquirer.prompt(
+    inquirer.prompt([
         {
-        name: 'selection',
-        type: 'input',
-        message: 'What is the Item ID you want to buy?',
-        validate: function(value) {
-            if (isNaN(value) == false) {
-                return true;
-            }
-            else {
-                return false;
-            }
+          name: "selection",
+          type: "input",
+          message: "What is the Item ID you want to buy?",
+          validate: function (value) {
+            return isNaN(value) === true || value < 1 ? false : true;
+          }
+        },
+        {
+          name: "quantity",
+          type: "input",
+          message: "How many do you want to buy?",
+          validate: function (value) {
+            return isNaN(value) === true || value < 1 ? false : true;
+          }
         }
-    })
-    .then(function(answers) {
-        var requestedId = answers.selection;
-        //console.log('The requested ID Is ' + requestedId);
-        if (requestedId >= 1 && requestedId <= 10) {
-            console.log('\n...Fantastic! We have this item...\n')
-            console.log('\n...Next step...\n');
+    ])
+      .then(function (answers) {
+        var userProduct = answers.selection;
+        var userQty = answers.quantity;
+        checkStore(userProduct);
+        //console.log(userProduct);
+        console.log(userQty);
+      });
+    }
 
-            inquirer.prompt(
-                {
-                    name: 'quantity',
-                    type: 'input',
-                    message: 'How many of these do you want to buy?',
-                    validate: function(value) {
-                        if (isNaN(value) == false) {
-                            return true;
-                        }
-                        else {
-                            return false;
-                        }
-                    }
-                })
-                .then(function(answers){
-                    var requestedQty = answers.quantity;
-                    console.log(requestedQty);
-                })
-        } else {
-            console.log("We do not have this item in stock at this time! Please select another item!");
-            shopping();
-        }
-    })
-  });
-  connection.end();
+//Function to show store to user
+  function showStore() {
+    connection.query("SELECT * FROM products", function (err, res) {
+      if (err) throw err;
+      for (var i = 0; i < res.length; i++) {
+        table.push([
+          res[i].item_id,
+          res[i].product_name,
+          res[i].department_name,
+          res[i].price,
+          res[i].stock_qty
+        ]);
+      }
+      console.log(table.toString());
+      shopping();
+    });
+  }
+
+//Read function
+function checkStore(userValue) {
+  var query = "SELECT * FROM products WHERE item_id = ?";
+          connection.query(query, userValue, function(err, res) {
+            if (err) throw err;
+            console.log(res);
+        });
 }
-
-
-//here we will check to see if there is enough stock
-
-//here we will log the insufficent stock to fulfill the order
-
-//udpate the remaining stock and log the purchase cost
-
-//make the table a function
-
