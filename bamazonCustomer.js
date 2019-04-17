@@ -100,34 +100,46 @@ function isShopping() {
         name: "selection",
         type: "input",
         message: "What is the Item ID you want to buy?",
+        validate: function(answer) {
+          if (isNaN(answer) === false) {
+            return true;
+          }
+          return false;
+        }
       },
       {
         name: "quantity",
         type: "input",
         message: "How many do you want to buy?",
+        validate: function(answer) {
+          if (isNaN(answer) === false) {
+            return true;
+          }
+          return false;
+        }
       }
     ])
     .then(function(answer) {
       var query = "SELECT * FROM products WHERE item_id = ?";
-      console.log(answer.selection + " and the qty " + answer.quantity)
+      console.log(answer.selection + " and the qty " + answer.quantity);
       connection.query(query, answer.selection, function(err, res) {
         if (err) throw err;
         for (var i = 0; i < res.length; i++) {
-
           if (answer.quantity > res[i].stock_qty) {
             console.log(
               "We are very sorry we do not have enough of this item in our inventory"
             ); //copy liri formatting
             landingPage();
           } else {
-            console.log("Success! Please review your order here");
-            console.log("============="); //liri formatting
-            console.log("Item: " + res[i].product_name);
-            console.log("Price per item : " + "$" + res[i].price);
-            console.log("Quantity Ordered: " + answer.quantity);
-            console.log("============="); //liri formatting
-            console.log("Your bill: $" + res[i].price * answer.quantity);
-            console.log("============="); //liri formatting
+            console.log(
+              `\n********************************\n\nPlease review your order here\n\nItem: ${
+                res[i].product_name
+              } \nPrice per item: ${"$" + res[i].price} \nQuantity Ordered: ${
+                answer.quantity
+              } \nYour bill: ${"$" +
+                res[i].price *
+                  answer.quantity}\n\n********************************\n`
+            );
 
             var updateStock = res[i].stock_qty - answer.quantity;
             var purchasedItem = answer.selection;
@@ -165,15 +177,39 @@ function purchaseCheckout(updateStock, purchasedItem) {
           ],
           function(err, res) {}
         );
-
-        console.log("============="); //liri formatting
-        console.log("Your order is now complete. Thank you"); //liri formatting
-        console.log("============="); //liri formatting
+        console.log(
+          `\n********************************\n\nSuccess! You order will take 5 days to ship. Thank you and come again soon!\n\n********************************\n`
+        );
+        updatedStock();
       } else {
-        console.log("============="); //liri formatting
-        console.log("No problem! Please visit us again");
-        console.log("============="); //liri formatting
+        console.log(
+          `\n********************************\n\nNo problem! Please visit us again!\n\n********************************\n`
+        );
         landingPage();
       }
     });
+}
+
+//===============QC SQL update to stock_qtys=============
+
+function updatedStock() {
+  var table = new Table({
+    head: ["Item ID", "Product", "Department", "Price", "Av Qty"],
+    colWidths: [11, 40, 20, 8, 8]
+  });
+  connection.query("SELECT * FROM products", function(err, res) {
+    if (err) throw err;
+
+    for (var i = 0; i < res.length; i++) {
+      var store = res[i].item_id,
+        productName = res[i].product_name,
+        departmentName = res[i].department_name,
+        price = res[i].price,
+        stockQuantity = res[i].stock_qty;
+
+      table.push([store, productName, departmentName, price, stockQuantity]);
+    }
+    console.log("\n Updated Inventory\n");
+    console.log(table.toString());
+  });
 }
